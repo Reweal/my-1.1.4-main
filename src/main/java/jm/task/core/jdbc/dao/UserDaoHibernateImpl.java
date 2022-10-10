@@ -1,0 +1,94 @@
+package jm.task.core.jdbc.dao;
+
+import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Util;
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class UserDaoHibernateImpl implements UserDao {
+    public UserDaoHibernateImpl() {
+    }
+
+
+    @Override
+    public void createUsersTable() {
+        String query = "create table if not exists users\n" + "(\n" + "    id       INT auto_increment not null,\n" + "    name     TEXT not null,\n" + "    lastName TEXT not null,\n" + "    age      INT  null,\n" + "    constraint users_pk\n" + "        primary key (id)\n" + ");";
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.createNativeQuery(query).executeUpdate();
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            System.err.println("При создании таблицы произошла ошибка.");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void dropUsersTable() {
+        String query = "drop table if exists users;";
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.createNativeQuery(query).executeUpdate();
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            System.err.println("При удалении таблицы произошла ошибка.");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void saveUser(String name, String lastName, byte age) {
+        User user = new User(name, lastName, age);
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.save(user);
+            session.getTransaction().commit();
+            System.out.println("User " + name + " успешно добавлен в таблицу");
+        } catch (HibernateException e) {
+            System.err.println("При создании user произошла ошибка.");
+        }
+    }
+
+    @Override
+    public void removeUserById(long id) {
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.delete(session.get(User.class, id));
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            System.err.println("При удалении user произошла ошибка.");
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        String sql = "from User";
+        List<User> list = new ArrayList<>();
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            list = session.createQuery(sql).list();
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            System.out.println("Ошибка при возвращении всех пользователей");
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public void cleanUsersTable() {
+        String query = "truncate table users";
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.createNativeQuery(query).executeUpdate();
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            System.err.println("При создании таблицы произошла ошибка.");
+            e.printStackTrace();
+        }
+    }
+}
